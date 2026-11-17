@@ -44,6 +44,11 @@
                     <i class="fa-solid fa-download"></i>
                     <span class="hidden sm:inline">Export CSV</span>
                 </button>
+                <!-- Admin Lock/Unlock Button -->
+                <button id="adminNavBtn" onclick="handleAdminButtonClick()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold px-4 py-2.5 rounded-xl transition-all border border-slate-700 flex items-center space-x-2 text-sm cursor-pointer">
+                    <i id="adminNavIcon" class="fa-solid fa-lock"></i>
+                    <span id="adminNavText" class="hidden sm:inline">Admin</span>
+                </button>
             </div>
         </div>
     </header>
@@ -51,7 +56,7 @@
     <!-- Main App Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        <!-- Game Category Tabs -->
+        <!-- Game Category & Staff Log Tabs -->
         <div id="gameTabs" class="flex flex-wrap gap-2 mb-8 border-b border-slate-800 pb-4">
             <button onclick="switchTab('All')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20 cursor-pointer">
                 <i class="fa-solid fa-trophy mr-2"></i> All Games
@@ -62,58 +67,167 @@
             <button onclick="switchTab('Rocket League')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 cursor-pointer">
                 <i class="fa-solid fa-car-side mr-2"></i> Rocket League
             </button>
+            <!-- Admin-Only Staff Log Tab (Hidden until PIN 2026 is entered) -->
+            <button id="staffLogTabBtn" onclick="switchTab('StaffLog')" class="tab-btn hidden px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-slate-900 text-amber-400 hover:bg-slate-800 border border-amber-500/40 cursor-pointer">
+                <i class="fa-solid fa-clipboard-check mr-2"></i> Staff Log & Stamps
+            </button>
         </div>
 
-        <!-- Search and Filter Row -->
-        <div class="flex flex-col sm:flex-row gap-4 mb-8 justify-between items-center">
-            <div class="relative w-full sm:w-80">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </span>
-                <input type="text" id="searchInput" oninput="renderApp()" placeholder="Search player name..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors">
+        <!-- LEADERBOARD VIEW -->
+        <div id="leaderboardView">
+            <!-- Search and Filter Row -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-8 justify-between items-center">
+                <div class="relative w-full sm:w-80">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="searchInput" oninput="renderApp()" placeholder="Search player name..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors">
+                </div>
+                <div class="text-sm text-slate-400 flex items-center space-x-2">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Live Booth Display &bull; Click any player to celebrate!</span>
+                </div>
             </div>
-            <div class="text-sm text-slate-400 flex items-center space-x-2">
-                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Live Booth Display &bull; Click any player to celebrate!</span>
-            </div>
+
+            <!-- Top 3 Podium Section -->
+            <section id="podiumSection" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <!-- Dynamically populated -->
+            </section>
+
+            <!-- Leaderboard Table Section -->
+            <section class="glass-panel rounded-2xl overflow-hidden shadow-2xl">
+                <div class="px-6 py-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
+                    <h3 class="font-bold text-lg text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-list-ol text-cyan-400"></i>
+                        <span id="tableTitleHeader">Leaderboard Standings</span>
+                    </h3>
+                    <span id="playerCountBadge" class="text-xs bg-slate-800 text-slate-300 font-semibold px-3 py-1 rounded-full border border-slate-700">0 Players</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider bg-slate-900/80">
+                                <th class="py-4 px-6 font-bold w-20 text-center">Rank</th>
+                                <th class="py-4 px-6 font-bold">Player Name</th>
+                                <th class="py-4 px-6 font-bold">Game</th>
+                                <th class="py-4 px-6 font-bold text-right">Score</th>
+                                <th class="py-4 px-6 font-bold text-center w-28">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardTableBody" class="divide-y divide-slate-800/60 text-sm">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
 
-        <!-- Top 3 Podium Section -->
-        <section id="podiumSection" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <!-- Dynamically populated -->
-        </section>
+        <!-- ADMIN-ONLY STAFF LOG & STAMP VIEW -->
+        <div id="staffLogView" class="hidden space-y-8">
+            <section class="glass-panel rounded-2xl p-6 shadow-2xl border border-amber-500/30">
+                <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-xl font-black text-amber-400 flex items-center space-x-2">
+                            <i class="fa-solid fa-stamp"></i>
+                            <span>Staff Log & Stamp Tracker</span>
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Admin-only record for participant stamps, draw eligibility, and remarks.</p>
+                    </div>
+                    <button onclick="exportStaffLogCSV()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold px-4 py-2 rounded-xl border border-slate-700 text-xs flex items-center space-x-2 cursor-pointer">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>Export Staff Log CSV</span>
+                    </button>
+                </div>
 
-        <!-- Leaderboard Table Section -->
-        <section class="glass-panel rounded-2xl overflow-hidden shadow-2xl">
-            <div class="px-6 py-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
-                <h3 class="font-bold text-lg text-white flex items-center space-x-2">
-                    <i class="fa-solid fa-list-ol text-cyan-400"></i>
-                    <span id="tableTitleHeader">Leaderboard Standings</span>
-                </h3>
-                <span id="playerCountBadge" class="text-xs bg-slate-800 text-slate-300 font-semibold px-3 py-1 rounded-full border border-slate-700">0 Players</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider bg-slate-900/80">
-                            <th class="py-4 px-6 font-bold w-20 text-center">Rank</th>
-                            <th class="py-4 px-6 font-bold">Player Name</th>
-                            <th class="py-4 px-6 font-bold">Game</th>
-                            <th class="py-4 px-6 font-bold text-right">Score</th>
-                            <th class="py-4 px-6 font-bold text-center w-28">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboardTableBody" class="divide-y divide-slate-800/60 text-sm">
-                        <!-- Dynamically populated -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                <!-- Add Staff Log Entry Form -->
+                <form id="staffLogForm" onsubmit="handleStaffLogSubmit(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 bg-slate-900/70 p-5 rounded-xl border border-slate-800">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Journal No.</label>
+                        <input type="text" id="logJournal" placeholder="e.g. 001" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Gamertag *</label>
+                        <input type="text" id="logGamertag" required placeholder="Player Gamertag" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Valid for Draw?</label>
+                        <select id="logValidDraw" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                            <option value="NO">NO</option>
+                            <option value="YES">YES</option>
+                        </select>
+                    </div>
+
+                    <!-- Stamp Checkboxes -->
+                    <div class="col-span-full flex flex-wrap gap-6 bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-sm">
+                        <label class="flex items-center space-x-2 cursor-pointer text-slate-200">
+                            <input type="checkbox" id="logStamp1" class="w-4 h-4 accent-amber-500 rounded">
+                            <span>Stamp 1 (Registration)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer text-slate-200">
+                            <input type="checkbox" id="logStamp2" class="w-4 h-4 accent-amber-500 rounded">
+                            <span>Stamp 2 (Achievement)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer text-slate-200">
+                            <input type="checkbox" id="logStamp3" class="w-4 h-4 accent-amber-500 rounded">
+                            <span>Stamp 3 (Social / Duo)</span>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">FC 26 Goals (6m)</label>
+                        <input type="number" step="any" id="logFcGoals" placeholder="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">FC 26 Fastest Goal (s)</label>
+                        <input type="number" step="any" id="logFcFastest" placeholder="e.g. 12.5" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">RL Goals (5m)</label>
+                        <input type="number" step="any" id="logRlGoals" placeholder="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">RL Fastest Goal (s)</label>
+                        <input type="number" step="any" id="logRlFastest" placeholder="e.g. 8.2" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Player Remark / Comment</label>
+                        <input type="text" id="logComment" placeholder="Uni-friendly notes or remarks..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+
+                    <div class="col-span-full pt-2">
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition-all shadow-lg shadow-amber-500/20 text-sm cursor-pointer">
+                            <i class="fa-solid fa-plus mr-1"></i> Save Staff Log Entry
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Staff Log Records Table -->
+                <div class="overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-amber-400 text-xs uppercase tracking-wider bg-slate-900">
+                                <th class="py-3.5 px-4 font-bold">Journal</th>
+                                <th class="py-3.5 px-4 font-bold">Gamertag</th>
+                                <th class="py-3.5 px-4 font-bold text-center">Stamps (1/2/3)</th>
+                                <th class="py-3.5 px-4 font-bold text-center">Draw</th>
+                                <th class="py-3.5 px-4 font-bold">Stats</th>
+                                <th class="py-3.5 px-4 font-bold">Remarks</th>
+                                <th class="py-3.5 px-4 font-bold text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffLogTableBody" class="divide-y divide-slate-800/60 text-sm bg-slate-950/50">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
     </main>
 
     <!-- Add/Edit Score Modal -->
     <div id="scoreModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
-        <div class="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-700/60 relative animate-in fade-in zoom-in-95 duration-150">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-700/60 relative">
             <div class="flex justify-between items-center mb-6">
                 <h3 id="modalTitle" class="text-xl font-bold text-white flex items-center space-x-2">
                     <i class="fa-solid fa-circle-plus text-cyan-400"></i>
@@ -124,7 +238,7 @@
                 </button>
             </div>
             <form id="scoreForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
-                <input type="hidden" id="editIndex" value="">
+                <input type="hidden" id="editId" value="">
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Player Name</label>
                     <input type="text" id="playerName" required placeholder="e.g. Alex Morgan" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors">
@@ -148,50 +262,139 @@
         </div>
     </div>
 
+    <!-- Admin PIN Modal -->
+    <div id="adminPinModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-amber-500/40 relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-amber-400 flex items-center space-x-2">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Admin Verification</span>
+                </h3>
+                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 mb-4">Enter the 4-digit Admin PIN to unlock Staff Logs & Edit/Delete privileges.</p>
+            <form onsubmit="submitAdminPin(event)" class="space-y-4">
+                <input type="password" id="adminPinInput" maxlength="4" required placeholder="••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-center text-xl tracking-widest text-white focus:outline-none focus:border-amber-500">
+                <p id="adminPinError" class="text-xs text-rose-400 hidden text-center">Incorrect PIN. Please try again.</p>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm cursor-pointer">Unlock Admin</button>
+            </form>
+        </div>
+    </div>
+
     <!-- JavaScript Application Logic -->
     <script>
-        // Initial Sample Scores Data
-        let scores = JSON.parse(localStorage.getItem('spawn_point_scores')) || [
-            { name: 'Marcus Vance', game: 'FIFA', score: 8 },
-            { name: 'Sarah Connor', game: 'FIFA', score: 6 },
-            { name: 'Leo Sterling', game: 'Rocket League', score: 1250 },
-            { name: 'Chloe Price', game: 'Rocket League', score: 980 },
-            { name: 'David Miller', game: 'FIFA', score: 5 },
-            { name: 'Elena Fisher', game: 'Rocket League', score: 840 }
-        ];
-
+        const ADMIN_PIN = "2026";
+        let isAdmin = sessionStorage.getItem('spawn_admin_auth') === 'true';
+        let scores = [];
+        let staffLogs = [];
         let currentTab = 'All';
 
-        function saveToStorage() {
-            localStorage.setItem('spawn_point_scores', JSON.stringify(scores));
+        // Update UI based on Admin state
+        function updateAdminUI() {
+            const navIcon = document.getElementById('adminNavIcon');
+            const navText = document.getElementById('adminNavText');
+            const staffTab = document.getElementById('staffLogTabBtn');
+
+            if (isAdmin) {
+                navIcon.className = 'fa-solid fa-lock-open text-emerald-400';
+                navText.textContent = 'Lock Admin';
+                staffTab.classList.remove('hidden');
+            } else {
+                navIcon.className = 'fa-solid fa-lock text-amber-400';
+                navText.textContent = 'Admin';
+                staffTab.classList.add('hidden');
+                if (currentTab === 'StaffLog') {
+                    switchTab('All');
+                }
+            }
+            renderApp();
+        }
+
+        function handleAdminButtonClick() {
+            if (isAdmin) {
+                isAdmin = false;
+                sessionStorage.removeItem('spawn_admin_auth');
+                updateAdminUI();
+            } else {
+                document.getElementById('adminPinModal').classList.remove('hidden');
+                document.getElementById('adminPinInput').value = '';
+                document.getElementById('adminPinError').classList.add('hidden');
+                document.getElementById('adminPinInput').focus();
+            }
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminPinModal').classList.add('hidden');
+        }
+
+        function submitAdminPin(e) {
+            e.preventDefault();
+            const pin = document.getElementById('adminPinInput').value;
+            if (pin === ADMIN_PIN) {
+                isAdmin = true;
+                sessionStorage.setItem('spawn_admin_auth', 'true');
+                closeAdminModal();
+                updateAdminUI();
+                fetchStaffLogs();
+            } else {
+                document.getElementById('adminPinError').classList.remove('hidden');
+            }
+        }
+
+        // Fetch Scores from Railway MySQL Backend
+        async function fetchScores() {
+            try {
+                const response = await fetch('/api/scores');
+                const data = await response.json();
+                scores = data.map(item => ({
+                    id: item.id,
+                    name: item.gamertag || item.name || '',
+                    game: item.game || 'FIFA',
+                    score: parseInt(item.score) || 0
+                }));
+                renderApp();
+            } catch (error) {
+                console.error('Error fetching scores:', error);
+            }
         }
 
         function switchTab(tabName) {
             currentTab = tabName;
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                if (btn.textContent.trim().includes(tabName)) {
-                    btn.className = 'tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20 cursor-pointer';
+                if (btn.textContent.trim().includes(tabName) || (tabName === 'StaffLog' && btn.id === 'staffLogTabBtn')) {
+                    btn.className = tabName === 'StaffLog'
+                        ? 'tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 cursor-pointer'
+                        : 'tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20 cursor-pointer';
                 } else {
-                    btn.className = 'tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 cursor-pointer';
+                    btn.className = btn.id === 'staffLogTabBtn'
+                        ? `tab-btn ${isAdmin ? '' : 'hidden'} px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-slate-900 text-amber-400 hover:bg-slate-800 border border-amber-500/40 cursor-pointer`
+                        : 'tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800 cursor-pointer';
                 }
             });
-            document.getElementById('tableTitleHeader').textContent = tabName === 'All' ? 'All Games Leaderboard' : `${tabName} Leaderboard`;
-            renderApp();
+
+            if (tabName === 'StaffLog') {
+                document.getElementById('leaderboardView').classList.add('hidden');
+                document.getElementById('staffLogView').classList.remove('hidden');
+                fetchStaffLogs();
+            } else {
+                document.getElementById('leaderboardView').classList.remove('hidden');
+                document.getElementById('staffLogView').classList.add('hidden');
+                document.getElementById('tableTitleHeader').textContent = tabName === 'All' ? 'All Games Leaderboard' : `${tabName} Leaderboard`;
+                renderApp();
+            }
         }
 
         function renderApp() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            // Filter by Tab and Search Query
             let filtered = scores.filter(item => {
                 const matchesTab = currentTab === 'All' || item.game === currentTab;
                 const matchesSearch = item.name.toLowerCase().includes(searchTerm);
                 return matchesTab && matchesSearch;
             });
 
-            // Sort descending by score
             filtered.sort((a, b) => b.score - a.score);
-
             document.getElementById('playerCountBadge').textContent = `${filtered.length} Player${filtered.length === 1 ? '' : 's'}`;
 
             renderPodium(filtered);
@@ -212,9 +415,9 @@
 
             const top3 = data.slice(0, 3);
             const podiumConfigs = [
-                { rank: 1, title: '1st Place', icon: 'fa-crown', color: 'text-amber-400', border: 'border-amber-500/50 glow-gold', bg: 'from-amber-500/10 to-slate-900' },
-                { rank: 2, title: '2nd Place', icon: 'fa-medal', color: 'text-slate-300', border: 'border-slate-400/40 glow-silver', bg: 'from-slate-400/10 to-slate-900' },
-                { rank: 3, title: '3rd Place', icon: 'fa-award', color: 'text-amber-600', border: 'border-amber-700/40 glow-bronze', bg: 'from-amber-700/10 to-slate-900' }
+                { title: '1st Place', icon: 'fa-crown', color: 'text-amber-400', border: 'border-amber-500/50 glow-gold', bg: 'from-amber-500/10 to-slate-900' },
+                { title: '2nd Place', icon: 'fa-medal', color: 'text-slate-300', border: 'border-slate-400/40 glow-silver', bg: 'from-slate-400/10 to-slate-900' },
+                { title: '3rd Place', icon: 'fa-award', color: 'text-amber-600', border: 'border-amber-700/40 glow-bronze', bg: 'from-amber-700/10 to-slate-900' }
             ];
 
             let html = '';
@@ -260,8 +463,13 @@
                 else if (index === 1) rankBadge = `<span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-400/20 text-slate-300 font-black border border-slate-400/30">2</span>`;
                 else if (index === 2) rankBadge = `<span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-amber-700/20 text-amber-600 font-black border border-amber-700/30">3</span>`;
 
-                // Find original index in full scores array for editing/deleting
-                const originalIndex = scores.indexOf(item);
+                const actionButtons = isAdmin ? `
+                    <div class="flex items-center justify-center space-x-2">
+                        <button onclick="deleteScore(${item.id})" class="p-2 text-slate-400 hover:text-rose-400 transition-colors rounded-lg hover:bg-slate-800 cursor-pointer" title="Delete Score">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                ` : `<span class="text-xs text-slate-600"><i class="fa-solid fa-lock"></i></span>`;
 
                 html += `
                     <tr class="hover:bg-slate-900/50 transition-colors">
@@ -276,37 +484,18 @@
                             <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-900 text-cyan-300 border border-slate-800">${item.game}</span>
                         </td>
                         <td class="py-4 px-6 text-right font-black text-cyan-400 text-base">${item.score.toLocaleString()}</td>
-                        <td class="py-4 px-6 text-center">
-                            <div class="flex items-center justify-center space-x-2">
-                                <button onclick="editScore(${originalIndex})" class="p-2 text-slate-400 hover:text-cyan-400 transition-colors rounded-lg hover:bg-slate-800 cursor-pointer" title="Edit Score">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
-                                <button onclick="deleteScore(${originalIndex})" class="p-2 text-slate-400 hover:text-rose-400 transition-colors rounded-lg hover:bg-slate-800 cursor-pointer" title="Delete Score">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </div>
-                        </td>
+                        <td class="py-4 px-6 text-center">${actionButtons}</td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html;
         }
 
-        function openModal(editIdx = null) {
+        function openModal() {
             document.getElementById('scoreModal').classList.remove('hidden');
-            if (editIdx !== null) {
-                document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square text-cyan-400"></i><span>Edit Score</span>';
-                document.getElementById('editIndex').value = editIdx;
-                document.getElementById('playerName').value = scores[editIdx].name;
-                document.getElementById('gameCategory').value = scores[editIdx].game;
-                document.getElementById('playerScore').value = scores[editIdx].score;
-            } else {
-                document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-circle-plus text-cyan-400"></i><span>Add New Score</span>';
-                document.getElementById('scoreForm').reset();
-                document.getElementById('editIndex').value = '';
-                if (currentTab !== 'All') {
-                    document.getElementById('gameCategory').value = currentTab;
-                }
+            document.getElementById('scoreForm').reset();
+            if (currentTab !== 'All' && currentTab !== 'StaffLog') {
+                document.getElementById('gameCategory').value = currentTab;
             }
         }
 
@@ -314,123 +503,157 @@
             document.getElementById('scoreModal').classList.add('hidden');
         }
 
-        function handleFormSubmit(e) {
+        async function handleFormSubmit(e) {
             e.preventDefault();
-            const editIdx = document.getElementById('editIndex').value;
-            const name = document.getElementById('playerName').value.trim();
+            const gamertag = document.getElementById('playerName').value.trim();
             const game = document.getElementById('gameCategory').value;
             const score = parseInt(document.getElementById('playerScore').value);
 
-            if (editIdx === '') {
-                scores.push({ name, game, score });
-                celebratePlayer();
-            } else {
-                scores[editIdx] = { name, game, score };
+            closeModal();
+            celebratePlayer();
+
+            try {
+                await fetch('/api/scores', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gamertag, game, score })
+                });
+                fetchScores();
+            } catch (error) {
+                console.error('Error saving score:', error);
+            }
+        }
+
+        async function deleteScore(id) {
+            if (!isAdmin) return;
+            if (confirm('Are you sure you want to delete this score?')) {
+                await fetch(`/api/scores/${id}`, { method: 'DELETE' });
+                fetchScores();
+            }
+        }
+
+        // --- STAFF LOG & STAMP LOGIC ---
+        async function fetchStaffLogs() {
+            if (!isAdmin) return;
+            try {
+                const res = await fetch('/api/staff-logs');
+                staffLogs = await res.json();
+                renderStaffLogs();
+            } catch (err) {
+                console.error('Error fetching staff logs:', err);
+            }
+        }
+
+        function renderStaffLogs() {
+            const tbody = document.getElementById('staffLogTableBody');
+            if (!staffLogs || staffLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-500">No staff logs recorded yet.</td></tr>';
+                return;
             }
 
-            saveToStorage();
-            closeModal();
-            renderApp();
+            tbody.innerHTML = staffLogs.map(log => `
+                <tr class="hover:bg-slate-900/50 transition-colors">
+                    <td class="py-3.5 px-4 font-mono text-xs text-slate-400">${log.journal_no || '-'}</td>
+                    <td class="py-3.5 px-4 font-bold text-white">${log.gamertag}</td>
+                    <td class="py-3.5 px-4 text-center space-x-1">
+                        <span>${log.stamp_1 ? '✅' : '⬜'}</span>
+                        <span>${log.stamp_2 ? '✅' : '⬜'}</span>
+                        <span>${log.stamp_3 ? '✅' : '⬜'}</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                        <span class="px-2 py-0.5 rounded text-xs font-bold ${log.valid_for_draw === 'YES' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}">
+                            ${log.valid_for_draw}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-xs text-slate-300">
+                        ${log.fc_goals !== null ? `FC Goals: <b>${log.fc_goals}</b> ` : ''}
+                        ${log.fc_fastest !== null ? `(${log.fc_fastest}s)<br>` : ''}
+                        ${log.rl_goals !== null ? `RL Goals: <b>${log.rl_goals}</b> ` : ''}
+                        ${log.rl_fastest !== null ? `(${log.rl_fastest}s)` : ''}
+                    </td>
+                    <td class="py-3.5 px-4 text-xs italic text-slate-400 max-w-xs truncate">${log.player_comment || '-'}</td>
+                    <td class="py-3.5 px-4 text-center">
+                        <button onclick="deleteStaffLog(${log.id})" class="text-rose-400 hover:text-rose-300 p-1.5 rounded hover:bg-slate-800 cursor-pointer" title="Delete Entry">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        function editScore(index) {
-            openModal(index);
+        async function handleStaffLogSubmit(e) {
+            e.preventDefault();
+            const payload = {
+                journal_no: document.getElementById('logJournal').value,
+                gamertag: document.getElementById('logGamertag').value,
+                stamp_1: document.getElementById('logStamp1').checked,
+                stamp_2: document.getElementById('logStamp2').checked,
+                stamp_3: document.getElementById('logStamp3').checked,
+                valid_for_draw: document.getElementById('logValidDraw').value,
+                fc_goals: document.getElementById('logFcGoals').value || null,
+                fc_fastest: document.getElementById('logFcFastest').value || null,
+                rl_goals: document.getElementById('logRlGoals').value || null,
+                rl_fastest: document.getElementById('logRlFastest').value || null,
+                player_comment: document.getElementById('logComment').value
+            };
+
+            const res = await fetch('/api/staff-logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                document.getElementById('staffLogForm').reset();
+                fetchStaffLogs();
+            }
         }
 
-        function deleteScore(index) {
-            if (confirm('Are you sure you want to delete this score?')) {
-                scores.splice(index, 1);
-                saveToStorage();
-                renderApp();
+        async function deleteStaffLog(id) {
+            if (confirm('Delete this staff log entry?')) {
+                await fetch(`/api/staff-logs/${id}`, { method: 'DELETE' });
+                fetchStaffLogs();
             }
         }
 
         function celebratePlayer() {
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
 
         function exportCSV() {
-            if (scores.length === 0) {
-                alert('No data available to export.');
-                return;
-            }
+            if (scores.length === 0) return alert('No data available to export.');
             let csvContent = "data:text/csv;charset=utf-8,Player Name,Game,Score\r\n";
             scores.forEach(row => {
-                csvContent += `\"${row.name}\",\"${row.game}\",${row.score}\r\n`;
+                csvContent += `"${row.name}","${row.game}",${row.score}\r\n`;
             });
-            const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            link.setAttribute("href", encodeURI(csvContent));
             link.setAttribute("download", "spawn_point_leaderboard.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
-        // Initial render on page load
-        renderApp();
-    // Paste your SheetBest API URL here
-const API_URL = "https://api.sheetbest.com/sheets/eae081db-11a0-4f57-acab-87ec12db7d8d";
+        function exportStaffLogCSV() {
+            if (staffLogs.length === 0) return alert('No staff log data available to export.');
+            let csvContent = "data:text/csv;charset=utf-8,Journal No.,Gamertag,Stamp 1,Stamp 2,Stamp 3,Valid for Draw,FC Goals,FC Fastest,RL Goals,RL Fastest,Comment\r\n";
+            staffLogs.forEach(r => {
+                csvContent += `"${r.journal_no || ''}","${r.gamertag}",${r.stamp_1 ? 'YES' : 'NO'},${r.stamp_2 ? 'YES' : 'NO'},${r.stamp_3 ? 'YES' : 'NO'},"${r.valid_for_draw}",${r.fc_goals ?? ''},${r.fc_fastest ?? ''},${r.rl_goals ?? ''},${r.rl_fastest ?? ''},"${(r.player_comment || '').replace(/"/g, '""')}"\r\n`;
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", "SPAWNPOINT_STAFF_LOG.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
-let scores = [];
-let currentTab = 'All';
+        // Auto-refresh scores every 10 seconds
+        setInterval(fetchScores, 10000);
 
-// Fetch live scores from Google Sheets
-async function fetchScores() {
-    try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        
-        // Convert string scores to numbers
-        scores = data.map(item => ({
-            name: item.name || '',
-            game: item.game || 'FIFA',
-            score: parseInt(item.score) || 0
-        }));
-
-        renderApp();
-    } catch (error) {
-        console.error('Error fetching scores from Google Sheets:', error);
-    }
-}
-
-// Send a new score to Google Sheets
-async function handleFormSubmit(e) {
-    e.preventDefault();
-    const name = document.getElementById('playerName').value.trim();
-    const game = document.getElementById('gameCategory').value;
-    const score = parseInt(document.getElementById('playerScore').value);
-
-    // Save optimistically local first
-    scores.push({ name, game, score });
-    celebratePlayer();
-    closeModal();
-    renderApp();
-
-    // Post to Google Sheets API
-    try {
-        await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ name, game, score })
-        });
-        // Re-fetch to ensure sync
+        // Initial boot
+        updateAdminUI();
         fetchScores();
-    } catch (error) {
-        console.error('Error saving score to Google Sheets:', error);
-    }
-}
-
-// Auto-refresh data every 10 seconds for the live projected display
-setInterval(fetchScores, 10000);
-
-// Initial Load
-fetchScores();
+    </script>
 </body>
 </html>
