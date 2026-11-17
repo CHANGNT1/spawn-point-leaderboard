@@ -1104,6 +1104,45 @@
                 tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
             );
         }
+// Staff Log API Endpoints
+app.get('/api/staff-logs', (req, res) => {
+    pool.query('SELECT * FROM staff_logs ORDER BY id DESC', (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+app.post('/api/staff-logs', (req, res) => {
+    const {
+        journal_no, gamertag, stamp_1, stamp_2, stamp_3,
+        valid_for_draw, game_mode, fc_goals, fc_fastest,
+        rl_goals, rl_fastest, player_comment
+    } = req.body;
+
+    const query = `
+        INSERT INTO staff_logs 
+        (journal_no, gamertag, stamp_1, stamp_2, stamp_3, valid_for_draw, game_mode, fc_goals, fc_fastest, rl_goals, rl_fastest, player_comment) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    const values = [
+        journal_no || '', gamertag, stamp_1 ? 1 : 0, stamp_2 ? 1 : 0, stamp_3 ? 1 : 0,
+        valid_for_draw || 'NO', game_mode || '', fc_goals || null,
+        fc_fastest || null, rl_goals || null, rl_fastest || null, player_comment || ''
+    ];
+
+    pool.query(query, values, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: results.insertId, message: 'Log added successfully' });
+    });
+});
+
+app.delete('/api/staff-logs/:id', (req, res) => {
+    pool.query('DELETE FROM staff_logs WHERE id = ?', [req.params.id], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Log deleted' });
+    });
+});
     </script>
 </body>
 </html>
